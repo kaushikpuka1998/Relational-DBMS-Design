@@ -10,19 +10,30 @@ public class Table {
     Schema schema;
     List<Row> rows = new ArrayList<>();
     List<Index> indexes = new ArrayList<>();
+    LockManager lockManager;
 
-    public Table(String name, Schema schema) {
+    public Table(String name, Schema schema,LockManager lockManager) {
         this.name = name;
         this.schema = schema;
+        this.lockManager = lockManager;
     }
 
     public void insert(Row row) {
-        // Validate against schema constraints
-        rows.add(row);
+        lockManager.acquireWriteLock(name);
+        try {
+            rows.add(row);
+        } finally {
+            lockManager.releaseWriteLock(name);
+        }
     }
 
     public List<Row> select(Predicate<Row> condition) {
-        return rows.stream().filter(condition).toList();
+        lockManager.acquireReadLock(name);
+        try {
+            return rows.stream().filter(condition).toList();
+        } finally {
+            lockManager.releaseReadLock(name);
+        }
     }
 
     public void delete(Predicate<Row> condition) {
@@ -36,7 +47,5 @@ public class Table {
             }
         }
     }
-
-
 }
 

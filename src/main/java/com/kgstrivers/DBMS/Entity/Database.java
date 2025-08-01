@@ -11,8 +11,8 @@ public class Database {
         this.name = name;
     }
 
-    public void createTable(String tableName, Schema schema) {
-        tables.putIfAbsent(tableName, new Table(tableName, schema));
+    public void createTable(String tableName, Schema schema, LockManager lockManager) {
+        tables.putIfAbsent(tableName, new Table(tableName, schema,lockManager));
     }
 
     public Table getTable(String name) {

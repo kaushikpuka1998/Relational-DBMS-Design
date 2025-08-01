@@ -14,6 +14,4 @@ public class Column {
     boolean isPrimaryKey;
     boolean isNullable;
     boolean isUnique;
-
-
 }
