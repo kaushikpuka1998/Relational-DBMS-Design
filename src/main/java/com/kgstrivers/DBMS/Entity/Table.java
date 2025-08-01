@@ -7,7 +7,7 @@ public class Table {
     public String name;
     Schema schema;
     List<Row> rows = new ArrayList<>();
-    private Map<String, Index> indexes = new HashMap<>();
+    private final Map<String, Index> indexes = new HashMap<>();
 
     LockManager lockManager;
 

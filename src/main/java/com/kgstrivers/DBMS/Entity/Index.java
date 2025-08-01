@@ -33,9 +33,5 @@ public class Index {
     public List<Row> search(Object value) {
         return indexMap.getOrDefault(value, new ArrayList<>());
     }
-
-    public String getColumnName() {
-        return columnName;
-    }
 }
 
