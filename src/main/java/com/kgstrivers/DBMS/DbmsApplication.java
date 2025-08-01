@@ -70,6 +70,10 @@ public class DbmsApplication {
 		executor.awaitTermination(2, TimeUnit.SECONDS);
 
 		System.out.println("✅ Final Data after concurrent deletes: " + usersTable.select(r -> true));
+
+		usersTable.createIndex("name");
+		System.out.println("Search via index: " + usersTable.searchByIndex("name", "Alice"));
+
 	}
 
 	private static void insertUser(Table table, int id, String name) {
