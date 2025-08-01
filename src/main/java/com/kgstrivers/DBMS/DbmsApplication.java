@@ -14,16 +14,15 @@ import java.util.concurrent.TimeUnit;
 public class DbmsApplication {
 
 	public static void main(String[] args) throws InterruptedException {
-		SpringApplication.run(DbmsApplication.class, args);
+
 		DatabaseSystem dbSystem = new DatabaseSystem();
 		LockManager lockManager = new LockManager();
 
-		// 1️⃣ Test: Create Database
+		// 1️⃣ Create Database
 		dbSystem.createDatabase("TestDB");
 		Database db = dbSystem.getDatabase("TestDB");
-		System.out.println("✅ Database Created: " + db.name);
 
-		// 2️⃣ Test: Create Table
+		// 2️⃣ Create Table
 		Schema userSchema = new Schema();
 		userSchema.setColumns(Arrays.asList(
                 new Column("id", DataType.INTEGER, true, false, true),
@@ -32,71 +31,52 @@ public class DbmsApplication {
 
 		db.createTable("Users", userSchema, lockManager);
 		Table usersTable = db.getTable("Users");
-		System.out.println("✅ Table Created: " + usersTable.name);
 
-		// 3️⃣ Test: Insert and Select
-		Row row1 = new Row();
-		row1.values.put("id", 1);
-		row1.values.put("name", "Alice");
-		usersTable.insert(row1);
+		// 3️⃣ Insert Data
+		insertUser(usersTable, 1, "Alice");
+		insertUser(usersTable, 2, "Bob");
+		insertUser(usersTable, 3, "Charlie");
+		insertUser(usersTable, 4, "David");
+		insertUser(usersTable, 5, "Eve");
 
-		Row row2 = new Row();
-		row2.values.put("id", 2);
-		row2.values.put("name", "Bob");
-		usersTable.insert(row2);
+		System.out.println("✅ Initial Data: " + usersTable.select(r -> true));
 
-		System.out.println("✅ Data Inserted: " + usersTable.select(r -> true));
+		// 4️⃣ Single Delete Test
+		System.out.println("\n--- Single Delete Test ---");
+		usersTable.delete(r -> (int) r.getValue("id") == 3);
+		System.out.println("✅ Data after deleting Charlie: " + usersTable.select(r -> true));
 
-		// 4️⃣ Test: Concurrent Inserts
-		System.out.println("\n--- Concurrent Insert Test ---");
+		// 5️⃣ Delete Non-existing Record
+		usersTable.delete(r -> (int) r.getValue("id") == 99);
+		System.out.println("✅ Data after trying to delete non-existing record: " + usersTable.select(r -> true));
+
+		// 6️⃣ Concurrent Delete Test
+		System.out.println("\n--- Concurrent Delete Test ---");
 		ExecutorService executor = Executors.newFixedThreadPool(2);
 
-		Runnable task1 = () -> {
-			Row r = new Row();
-			r.values.put("id", 3);
-			r.values.put("name", "Charlie");
-			usersTable.insert(r);
-			System.out.println("Thread1 inserted Charlie");
+		Runnable deleteTask1 = () -> {
+			usersTable.delete(r -> (int) r.getValue("id") == 2);
+			System.out.println("Thread1 deleted Bob");
 		};
 
-		Runnable task2 = () -> {
-			Row r = new Row();
-			r.values.put("id", 4);
-			r.values.put("name", "David");
-			usersTable.insert(r);
-			System.out.println("Thread2 inserted David");
+		Runnable deleteTask2 = () -> {
+			usersTable.delete(r -> (int) r.getValue("id") == 4);
+			System.out.println("Thread2 deleted David");
 		};
 
-		executor.submit(task1);
-		executor.submit(task2);
+		executor.submit(deleteTask1);
+		executor.submit(deleteTask2);
 		executor.shutdown();
 		executor.awaitTermination(2, TimeUnit.SECONDS);
 
-		System.out.println("✅ Final Data after concurrent insert: " + usersTable.select(r -> true));
+		System.out.println("✅ Final Data after concurrent deletes: " + usersTable.select(r -> true));
+	}
 
-		// 5️⃣ Test: Concurrent Read and Write
-		System.out.println("\n--- Concurrent Read/Write Test ---");
-		ExecutorService executor2 = Executors.newFixedThreadPool(2);
-
-		Runnable writer = () -> {
-			Row r = new Row();
-			r.values.put("id", 5);
-			r.values.put("name", "Eve");
-			usersTable.insert(r);
-			System.out.println("Writer inserted Eve");
-		};
-
-		Runnable reader = () -> {
-			List<Row> data = usersTable.select(r -> true);
-			System.out.println("Reader fetched: " + data);
-		};
-
-		executor2.submit(writer);
-		executor2.submit(reader);
-		executor2.shutdown();
-		executor2.awaitTermination(2, TimeUnit.SECONDS);
-
-		System.out.println("✅ Final Data after Read/Write: " + usersTable.select(r -> true));
+	private static void insertUser(Table table, int id, String name) {
+		Row row = new Row();
+		row.values.put("id", id);
+		row.values.put("name", name);
+		table.insert(row);
 	}
 
 }
