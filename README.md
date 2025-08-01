@@ -71,7 +71,14 @@ Client → DatabaseSystem → Database → Table → Row
 ```
 Output:
 ```
-✅ Database Created: TestDB
-✅ Table Created: Users
-✅ Data Inserted: [Row{values={name=Alice, id=1}}, Row{values={name=Bob, id=2}}]
+✅ Initial Data: [Row{values={name=Alice, id=1}}, Row{values={name=Bob, id=2}}, Row{values={name=Charlie, id=3}}, Row{values={name=David, id=4}}, Row{values={name=Eve, id=5}}]
+
+--- Single Delete Test ---
+✅ Data after deleting Charlie: [Row{values={name=Alice, id=1}}, Row{values={name=Bob, id=2}}, Row{values={name=David, id=4}}, Row{values={name=Eve, id=5}}]
+✅ Data after trying to delete non-existing record: [Row{values={name=Alice, id=1}}, Row{values={name=Bob, id=2}}, Row{values={name=David, id=4}}, Row{values={name=Eve, id=5}}]
+
+--- Concurrent Delete Test ---
+Thread1 deleted Bob
+Thread2 deleted David
+✅ Final Data after concurrent deletes: [Row{values={name=Alice, id=1}}, Row{values={name=Eve, id=5}}]
 ```
